@@ -26,17 +26,20 @@ my %files = (
 	'NOUN'	=> 'nouns.txt',
 	'VERB'  => 'verbs.txt'
 );
+
 my @replaceable_tokens = keys %files;
+my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|VERB' for use in split regex
 
 
 my ($string, $target) = @ARGV;		# grab two unnamed command line parameters
-my @tokenized_string = split(/ /, $string);  # tokenize the input string on spaces
+my @tokenized_string = split(/($replaceable_tokens_ORed)/, $string);  # tokenize the input string while keeping tokens
 
 =begin comment
 Return the token matched by part of the input string if it matches
 =cut
 sub isToken {
 	my $possible_token = $_[0];
+	print "$possible_token\n";
 	foreach(@replaceable_tokens) {
 		if(index($possible_token, $_) == 0) {
 			return $_;
@@ -50,23 +53,23 @@ Keeping track of where we were, return the next possible value for a token
 =cut
 my $dog = 0;
 sub getNextReplacementForToken {
-	print $dog++;
+	# print $dog++;
 }
 
 my $token;
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
-		print "$_ matches token $token\n";
+		# print "$_ matches token $token\n";
 
 		getNextReplacementForToken($token);
 
 	} else {
-		print "NO\n";
+		# print "NO\n";
 	}
 }
 
 foreach(@replaceable_tokens) {
-	print $_ . "\n";
+#	print $_ . "\n";
 }
 
 
