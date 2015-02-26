@@ -32,6 +32,7 @@ my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|
 
 
 my ($string, $target) = @ARGV;		# grab two unnamed command line parameters
+
 my @tokenized_string = split(/($replaceable_tokens_ORed)/, $string);  # tokenize the input string while keeping tokens
 
 =begin comment
@@ -48,28 +49,84 @@ sub isToken {
     return 0;
 }
 
-=begin comment
-Keeping track of where we were, return the next possible value for a token
-=cut
-my $dog = 0;
-sub getNextReplacementForToken {
-	# print $dog++;
+
+sub findAllVariants {
+
 }
 
-my $token;
+###=begin comment
+###Keeping track of where we were, return the next possible value for a token
+###=cut
+my $dog = 0;
+sub getNextReplacementForToken {
+	print $dog++;
+}
+
+=begin comment
+Loop through the tokenized array and create a counter for each Token.
+The counter will keep track of how far we've gone through that token's list of words.
+=cut	
+my ($token, $num_tokens);
+my (%token_replacement_counter, %token_num_replacements, %token_types);			# will know how many words we've used for each token
+
+$num_tokens = 0;		## this should be in constructor if all this crap is made into an object
+
+sub setUpTokenTrackers {
+		$token_replacement_counter{$num_tokens} = 0;	# for each token, we've used 0 words so far
+		$token_num_replacements{$num_tokens} = length $token;		# should be number of words in file per token type
+		$token_types{$num_tokens} = $_[0];				# ADJECTIVE, etc
+
+		$num_tokens++;
+}
+
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
-		# print "$_ matches token $token\n";
-
-		getNextReplacementForToken($token);
-
-	} else {
-		# print "NO\n";
+		setUpTokenTrackers($token);
+#		getNextReplacementForToken($token);
 	}
 }
 
-foreach(@replaceable_tokens) {
-#	print $_ . "\n";
+my $panic_counter;
+my $keep_going = 1;
+while($keep_going) {
+	$panic_counter ++;
+	if($panic_counter > 1000) {
+		print "sorry I panicked!!!\n";
+		exit;
+	}
+	# We keep going unless each token has been replaced with its full compliment of replacements
+	foreach(keys %token_num_replacements) {
+		$keep_going = 0;
+		if($token_replacement_counter{$_} < $token_num_replacements{$_}) {
+			$keep_going = 1;
+		}
+	}
+
+	###  this is just a shitty loop for testing
+	## it increments allll the tokens at the same time
+	# we still need to increment each separately per loop.
+	$num_tokens = 0;
+	foreach(@tokenized_string) {
+		if($token = isToken($_)) {
+			$token_replacement_counter{$num_tokens} = $token_replacement_counter{$num_tokens} + 1;	# for each token, we've used 0 words so far
+			$num_tokens++;
+		}
+	}
+}
+
+print "only counted to " . $panic_counter . "!! yeeeha!! \n";
+
+
+
+###
+foreach(keys %token_replacement_counter) {
+	print $_ . " = " . $token_replacement_counter{$_} . "\n";
+}
+foreach(keys %token_num_replacements) {
+	print $_ . " = " . $token_num_replacements{$_} . "\n";
+}
+foreach(keys %token_types) {
+	print $_ . " = " . $token_types{$_} . "\n";
 }
 
 
