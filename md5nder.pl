@@ -40,7 +40,7 @@ Return the token matched by part of the input string if it matches
 =cut
 sub isToken {
 	my $possible_token = $_[0];
-	print "$possible_token\n";
+#	print "$possible_token\n";
 	foreach(@replaceable_tokens) {
 		if(index($possible_token, $_) == 0) {
 			return $_;
@@ -88,30 +88,64 @@ foreach(@tokenized_string) {
 
 my $panic_counter;
 my $keep_going = 1;
+my $try_this_string;
+
 while($keep_going) {
 	$panic_counter ++;
 	if($panic_counter > 1000) {
+		foreach(sort keys %token_replacement_counter) {
+			print $_ . " = " . $token_replacement_counter{$_} . "\n";
+		}
+		foreach(sort keys %token_num_replacements) {
+			print $_ . " = " . $token_num_replacements{$_} . "\n";
+		}
+		foreach(sort keys %token_types) {
+			print $_ . " = " . $token_types{$_} . "\n";
+		}
 		print "sorry I panicked!!!\n";
 		exit;
 	}
+
+	# loop through the bits of string and fill in the next word in each token or the bit of string
+	$num_tokens = 0;
+	$try_this_string = "";
+	foreach(@tokenized_string) {
+		if($token = isToken($_)) {
+			###  for testing, just add ADJECTIVE0  ADJECTIVE1, ADJECTIVE2 etc
+			$try_this_string .= $token_types{$num_tokens} . $token_replacement_counter{$num_tokens};
+			$num_tokens++;
+		} else {
+			$try_this_string .= $_;		# append the non-token segment 
+		}
+	}
+	print "okay try this string: ";
+	print $try_this_string . "\n";
+
+	# loop through the token counters and increment the appropriate ones
+	foreach(sort keys %token_replacement_counter) {
+		# print "examine key " . $_ . "\n";
+		if($_ == 0) {
+			# We always increment the ones position
+			$token_replacement_counter{$_} = $token_replacement_counter{$_} + 1;
+			# print "zeroooooooooooooooooooo\n";
+		} elsif($token_replacement_counter{$_-1} == $token_num_replacements{$_-1}) {
+			# The previous position has reached its max, so set it to 0 and increment the current
+			$token_replacement_counter{$_-1} = 0;
+			$token_replacement_counter{$_} = $token_replacement_counter{$_} + 1;
+		# } else {
+		# 	print "didnt do either\n";
+		}
+	}
+
 	# We keep going unless each token has been replaced with its full compliment of replacements
-	foreach(keys %token_num_replacements) {
+	foreach(sort keys %token_num_replacements) {
 		$keep_going = 0;
 		if($token_replacement_counter{$_} < $token_num_replacements{$_}) {
 			$keep_going = 1;
 		}
 	}
 
-	###  this is just a shitty loop for testing
-	## it increments allll the tokens at the same time
-	# we still need to increment each separately per loop.
-	$num_tokens = 0;
-	foreach(@tokenized_string) {
-		if($token = isToken($_)) {
-			$token_replacement_counter{$num_tokens} = $token_replacement_counter{$num_tokens} + 1;	# for each token, we've used 0 words so far
-			$num_tokens++;
-		}
-	}
+
 }
 
 print "only counted to " . $panic_counter . "!! yeeeha!! \n";
@@ -119,13 +153,13 @@ print "only counted to " . $panic_counter . "!! yeeeha!! \n";
 
 
 ###
-foreach(keys %token_replacement_counter) {
+foreach(sort keys %token_replacement_counter) {
 	print $_ . " = " . $token_replacement_counter{$_} . "\n";
 }
-foreach(keys %token_num_replacements) {
+foreach(sort keys %token_num_replacements) {
 	print $_ . " = " . $token_num_replacements{$_} . "\n";
 }
-foreach(keys %token_types) {
+foreach(sort keys %token_types) {
 	print $_ . " = " . $token_types{$_} . "\n";
 }
 
