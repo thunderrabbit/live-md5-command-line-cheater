@@ -16,6 +16,10 @@ This program accepts two unnamed command line parameters:
 use strict;
 use warnings;
 use diagnostics;			# explains why stuff is busted
+use File::Slurp;
+use Digest::MD5 qw(md5_hex);
+
+my $MAX_PANIC = 100000000;
 
 =begin comment
 $files is a hash which links the replaceable tokens in strings with files containing possible replacement values
@@ -49,91 +53,74 @@ sub isToken {
     return 0;
 }
 
-
-sub findAllVariants {
-
-}
-
-###=begin comment
-###Keeping track of where we were, return the next possible value for a token
-###=cut
-my $dog = 0;
-sub getNextReplacementForToken {
-	print $dog++;
-}
-
 =begin comment
 Loop through the tokenized array and create a counter for each Token.
 The counter will keep track of how far we've gone through that token's list of words.
 =cut	
-my ($token, $num_tokens);
-my (%token_replacement_counter, %token_num_replacements, %token_types);			# will know how many words we've used for each token
+my ($token, $num_tokens, $which_token);
+my %token_replacement_counter;		# will know how many words we've used for each token
+my %token_num_replacements;			# will know how many replacments there are  (superfluous?)
+my %token_types;					# know what types of tokens exist
+my %token_replacements;				# the actual list of replacements
 
 $num_tokens = 0;		## this should be in constructor if all this crap is made into an object
 
 sub setUpTokenTrackers {
-		$token_replacement_counter{$num_tokens} = 0;	# for each token, we've used 0 words so far
-		$token_num_replacements{$num_tokens} = length $token;		# should be number of words in file per token type
-		$token_types{$num_tokens} = $_[0];				# ADJECTIVE, etc
+	my $token = $_[0];		# ADJECTIVE, etc
+	$token_types{$num_tokens} = $token;
+	@{$token_replacements{$token}} = read_file($files{$token}, chomp => 1);
+	$token_replacement_counter{$num_tokens} = 0;	# for each token, we've used 0 words so far
+	$token_num_replacements{$num_tokens} = scalar @{$token_replacements{$token}};		# should be number of words in file per token type
 
-		$num_tokens++;
+	$num_tokens++;
 }
 
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
 		setUpTokenTrackers($token);
-#		getNextReplacementForToken($token);
 	}
 }
 
 my $panic_counter;
 my $keep_going = 1;
 my $try_this_string;
+my $md5_digest;
 
 while($keep_going) {
 	$panic_counter ++;
-	if($panic_counter > 1000) {
-		foreach(sort keys %token_replacement_counter) {
-			print $_ . " = " . $token_replacement_counter{$_} . "\n";
-		}
-		foreach(sort keys %token_num_replacements) {
-			print $_ . " = " . $token_num_replacements{$_} . "\n";
-		}
-		foreach(sort keys %token_types) {
-			print $_ . " = " . $token_types{$_} . "\n";
-		}
-		print "sorry I panicked!!!\n";
+	if($panic_counter >= $MAX_PANIC) {
+		print "Sorry I panicked after $panic_counter iterations!!!\n";
 		exit;
 	}
 
 	# loop through the bits of string and fill in the next word in each token or the bit of string
-	$num_tokens = 0;
+	$which_token = 0;
 	$try_this_string = "";
 	foreach(@tokenized_string) {
 		if($token = isToken($_)) {
-			###  for testing, just add ADJECTIVE0  ADJECTIVE1, ADJECTIVE2 etc
-			$try_this_string .= $token_types{$num_tokens} . $token_replacement_counter{$num_tokens};
-			$num_tokens++;
+			# append the current replacement of the token type for the current token number
+			$try_this_string .= $token_replacements{$token_types{$which_token}}[$token_replacement_counter{$which_token}];
+			$which_token++;
 		} else {
 			$try_this_string .= $_;		# append the non-token segment 
 		}
 	}
-	print "okay try this string: ";
-	print $try_this_string . "\n";
+
+	$md5_digest = md5_hex($try_this_string);
+	if($md5_digest =~ /$target$/) {
+		print $md5_digest . "    ->   " . $try_this_string . "\n";
+	}
+
 
 	# loop through the token counters and increment the appropriate ones
 	foreach(sort keys %token_replacement_counter) {
-		# print "examine key " . $_ . "\n";
 		if($_ == 0) {
 			# We always increment the ones position
 			$token_replacement_counter{$_} = $token_replacement_counter{$_} + 1;
-			# print "zeroooooooooooooooooooo\n";
 		} elsif($token_replacement_counter{$_-1} == $token_num_replacements{$_-1}) {
 			# The previous position has reached its max, so set it to 0 and increment the current
 			$token_replacement_counter{$_-1} = 0;
 			$token_replacement_counter{$_} = $token_replacement_counter{$_} + 1;
-		# } else {
-		# 	print "didnt do either\n";
 		}
 	}
 
@@ -144,36 +131,5 @@ while($keep_going) {
 			$keep_going = 1;
 		}
 	}
-
-
 }
 
-print "only counted to " . $panic_counter . "!! yeeeha!! \n";
-
-
-
-###
-foreach(sort keys %token_replacement_counter) {
-	print $_ . " = " . $token_replacement_counter{$_} . "\n";
-}
-foreach(sort keys %token_num_replacements) {
-	print $_ . " = " . $token_num_replacements{$_} . "\n";
-}
-foreach(sort keys %token_types) {
-	print $_ . " = " . $token_types{$_} . "\n";
-}
-
-
-# target="$1"
-
-# echo searching for $target
-
-# # read each line of a file or output stream
-# while read line
-# do
-#     hash="$(echo -n "$line" | md5)"
-#     if echo $hash | grep $target$;
-#     then
-#        echo $line
-#     fi
-# done
