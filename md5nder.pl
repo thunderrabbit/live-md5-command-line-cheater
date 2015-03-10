@@ -27,8 +27,10 @@ $files is a hash which links the replaceable tokens in strings with files contai
 =cut
 my %files = (
 	'ADJECTIVE' => 'adjectives.txt',
+	'PLURALS'	=> 'plurals.txt',
 	'NOUN'	=> 'nouns.txt',
-	'VERB'  => 'verbs.txt'
+	'VERB'  => 'verbs.txt',
+	'COUNT' => 'count.txt'
 );
 
 my @replaceable_tokens = keys %files;
