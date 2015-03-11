@@ -39,6 +39,8 @@ my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|
 
 my ($string, $target) = @ARGV;		# grab two unnamed command line parameters
 
+$string =~ s|\\!|!|g;
+
 my @tokenized_string = split(/($replaceable_tokens_ORed)/, $string);  # tokenize the input string while keeping tokens
 
 =begin comment
