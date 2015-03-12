@@ -105,6 +105,12 @@ sub printValidStringAndItsMD5Hex {
 	print $md5_digest . "    ->   " . $validString . "\n";
 
 }
+
+sub tryCapitalizingStuff {
+	my($try_this_string,$cap_flags,$target) = @_;
+	print $try_this_string . "\n";
+}
+
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
 		setUpTokenTrackers($token);
