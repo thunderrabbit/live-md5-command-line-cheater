@@ -36,8 +36,17 @@ my %files = (
 my @replaceable_tokens = keys %files;
 my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|VERB' for use in split regex
 
+=begin comment
+	Command line parameters are unnamed, so must be sent in order:
 
-my ($string, $target) = @ARGV;		# grab two unnamed command line parameters
+	1. quoted string to be used as the template.  This can include "ADJECTIVE" or "PLURALS" etc (see source code) which will be replaced by samples
+	2. target string (number) for the end of the hash to match
+	3. string representing binary flags for which words of the template can have their case modified, 
+	    e.g. 01100 says we can change case of the second and third words
+
+=cut
+my ($string, $target, $cap_flags) = @ARGV;		# grab unnamed command line parameters
+
 
 $string =~ s|\\!|!|g;
 
