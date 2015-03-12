@@ -36,10 +36,24 @@ my %files = (
 my @replaceable_tokens = keys %files;
 my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|VERB' for use in split regex
 
+=begin comment
+	Command line parameters are unnamed, so must be sent in order:
 
-my ($string, $target) = @ARGV;		# grab two unnamed command line parameters
+	1. quoted string to be used as the template.  This can include "ADJECTIVE" or "PLURALS" etc (see source code) which will be replaced by samples
+	2. target string (number) for the end of the hash to match
+	3. string representing binary flags for which words of the template can have their case modified, 
+	    e.g. 01100 says we can change case of the second and third words
 
-$string =~ s|\\!|!|g;
+=cut
+my ($string, $target, $cap_flags) = @ARGV;		# grab unnamed command line parameters
+
+sub preProcessString {
+	my $string = $_[0];
+	$string =~ s|\\!|!|g;				# bangs have to be escaped in bash, but the \! is passed to Perl, so I need to lop the \
+	return $string;
+}
+
+$string = preProcessString($string);
 
 my @tokenized_string = split(/($replaceable_tokens_ORed)/, $string);  # tokenize the input string while keeping tokens
 
@@ -79,6 +93,54 @@ sub setUpTokenTrackers {
 	$num_tokens++;
 }
 
+sub thisStringMatchesTargetBOOL {
+	my ($try_this_string, $target) = @_;
+	my $md5_digest = md5_hex($try_this_string);
+	return ($md5_digest =~ /$target$/);
+}
+
+sub printValidStringAndItsMD5Hex {
+	my ($validString) = @_;
+	my $md5_digest = md5_hex($validString);
+	print $md5_digest . "    ->   " . $validString . "\n";
+
+}
+
+sub randomlyCapitalizeWord {
+	my ($word) = @_;
+    my $length = length($word);
+    for (my $pos = 0; $pos < $length; $pos++) {
+       if (int(rand(2))) {
+          substr ($word, $pos, 1) = ucfirst ( substr ($word, $pos, 1));
+       } else {
+          substr ($word, $pos, 1) = lcfirst ( substr ($word, $pos, 1));
+       }
+    }
+    return $word;
+}
+
+sub tryCapitalizingStuff {
+	my($try_this_string,$cap_flags,$target) = @_;
+	my @pieces_of_string = split(/ /,$try_this_string);
+	my $number_of_random_capitalizations_to_try = 10;
+	for(my $count = $number_of_random_capitalizations_to_try; $count >= 0; $count--) {
+		my @local_cap_flags = split(//,$cap_flags);   # make a copy because we're about to destory @local_cap_flags
+
+		my $which_word_in_string = 0;
+		foreach my $x (@local_cap_flags) {
+			if($x) {
+				$pieces_of_string[$which_word_in_string] = randomlyCapitalizeWord($pieces_of_string[$which_word_in_string]);
+			}
+			$which_word_in_string++;
+		}
+
+		$try_this_string = join(' ',@pieces_of_string);
+		if(thisStringMatchesTargetBOOL($try_this_string, $target)) {
+			printValidStringAndItsMD5Hex($try_this_string);
+		}
+	}
+}
+
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
 		setUpTokenTrackers($token);
@@ -88,7 +150,6 @@ foreach(@tokenized_string) {
 my $panic_counter;
 my $keep_going = 1;
 my $try_this_string;
-my $md5_digest;
 
 while($keep_going) {
 	$panic_counter ++;
@@ -110,9 +171,10 @@ while($keep_going) {
 		}
 	}
 
-	$md5_digest = md5_hex($try_this_string);
-	if($md5_digest =~ /$target$/) {
-		print $md5_digest . "    ->   " . $try_this_string . "\n";
+	if(thisStringMatchesTargetBOOL($try_this_string, $target)) {
+		printValidStringAndItsMD5Hex($try_this_string);
+	} elsif($cap_flags) {
+		tryCapitalizingStuff($try_this_string,$cap_flags,$target)
 	}
 
 

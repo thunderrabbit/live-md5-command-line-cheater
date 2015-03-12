@@ -155,6 +155,7 @@
 000000000005633 Okay then we can tell a story.
 000000000005772 four
 000000000006215 But we are just getting started!
+000000000006500 Is that degrees F or C??????????????????????????
 000000000006833 R2D2
 000000000006925 Must keep trying
 000000000007002 um, no?
