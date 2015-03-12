@@ -93,6 +93,11 @@ sub setUpTokenTrackers {
 	$num_tokens++;
 }
 
+sub printValidStringAndItsMD5Hex {
+	my ($validString,$md5Hex) = @_;
+	print $md5Hex . "    ->   " . $validString . "\n";
+
+}
 foreach(@tokenized_string) {
 	if($token = isToken($_)) {
 		setUpTokenTrackers($token);
@@ -126,7 +131,7 @@ while($keep_going) {
 
 	$md5_digest = md5_hex($try_this_string);
 	if($md5_digest =~ /$target$/) {
-		print $md5_digest . "    ->   " . $try_this_string . "\n";
+		printValidStringAndItsMD5Hex($try_this_string,$md5_digest);
 	}
 
 
