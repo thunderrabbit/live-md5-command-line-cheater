@@ -47,8 +47,13 @@ my $replaceable_tokens_ORed = join('|',@replaceable_tokens);		# 'ADJECTIVE|NOUN|
 =cut
 my ($string, $target, $cap_flags) = @ARGV;		# grab unnamed command line parameters
 
+sub preProcessString {
+	my $string = $_[0];
+	$string =~ s|\\!|!|g;				# bangs have to be escaped in bash, but the \! is passed to Perl, so I need to lop the \
+	return $string;
+}
 
-$string =~ s|\\!|!|g;
+$string = preProcessString($string);
 
 my @tokenized_string = split(/($replaceable_tokens_ORed)/, $string);  # tokenize the input string while keeping tokens
 
