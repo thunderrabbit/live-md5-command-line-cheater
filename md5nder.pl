@@ -106,9 +106,39 @@ sub printValidStringAndItsMD5Hex {
 
 }
 
+sub randomlyCapitalizeWord {
+	my ($word) = @_;
+    my $length = length($word);
+    for (my $pos = 0; $pos < $length; $pos++) {
+       if (int(rand(2))) {
+          substr ($word, $pos, 1) = ucfirst ( substr ($word, $pos, 1));
+       } else {
+          substr ($word, $pos, 1) = lcfirst ( substr ($word, $pos, 1));
+       }
+    }
+    return $word;
+}
+
 sub tryCapitalizingStuff {
 	my($try_this_string,$cap_flags,$target) = @_;
-	print $try_this_string . "\n";
+	my @pieces_of_string = split(/ /,$try_this_string);
+	my $number_of_random_capitalizations_to_try = 10;
+	for(my $count = $number_of_random_capitalizations_to_try; $count >= 0; $count--) {
+		my @local_cap_flags = split(//,$cap_flags);   # make a copy because we're about to destory @local_cap_flags
+
+		my $which_word_in_string = 0;
+		foreach my $x (@local_cap_flags) {
+			if($x) {
+				$pieces_of_string[$which_word_in_string] = randomlyCapitalizeWord($pieces_of_string[$which_word_in_string]);
+			}
+			$which_word_in_string++;
+		}
+
+		$try_this_string = join(' ',@pieces_of_string);
+		if(thisStringMatchesTargetBOOL($try_this_string, $target)) {
+			printValidStringAndItsMD5Hex($try_this_string);
+		}
+	}
 }
 
 foreach(@tokenized_string) {
