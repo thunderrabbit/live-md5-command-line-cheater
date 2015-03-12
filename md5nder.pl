@@ -93,9 +93,16 @@ sub setUpTokenTrackers {
 	$num_tokens++;
 }
 
+sub thisStringMatchesTargetBOOL {
+	my ($try_this_string, $target) = @_;
+	my $md5_digest = md5_hex($try_this_string);
+	return ($md5_digest =~ /$target$/);
+}
+
 sub printValidStringAndItsMD5Hex {
-	my ($validString,$md5Hex) = @_;
-	print $md5Hex . "    ->   " . $validString . "\n";
+	my ($validString) = @_;
+	my $md5_digest = md5_hex($validString);
+	print $md5_digest . "    ->   " . $validString . "\n";
 
 }
 foreach(@tokenized_string) {
@@ -107,7 +114,6 @@ foreach(@tokenized_string) {
 my $panic_counter;
 my $keep_going = 1;
 my $try_this_string;
-my $md5_digest;
 
 while($keep_going) {
 	$panic_counter ++;
@@ -129,9 +135,10 @@ while($keep_going) {
 		}
 	}
 
-	$md5_digest = md5_hex($try_this_string);
-	if($md5_digest =~ /$target$/) {
-		printValidStringAndItsMD5Hex($try_this_string,$md5_digest);
+	if(thisStringMatchesTargetBOOL($try_this_string, $target)) {
+		printValidStringAndItsMD5Hex($try_this_string);
+	} elsif($cap_flags) {
+		tryCapitalizingStuff($try_this_string,$cap_flags,$target)
 	}
 
 
